@@ -6,4 +6,9 @@ on solving several problems using IGA, Initialization using psydac
 
 **For your analysis You can find and install the following packages from the url**
 
-for psydac : https://github.com/pyccel/psydac
+# For psydac : 
+  https://github.com/pyccel/psydac
+
+# For pyccel :
+  
+  https://github.com/pyccel/pyccel
