@@ -14,8 +14,7 @@ on solving several problems using IGA, Initialization using psydac
   https://github.com/pyccel/pyccel
 
 
-
-Cahn-Haliard system is evolved until t = 1000 steps. 
+## As an exam, the Cahn-Haliard system evolved until t = 1000 steps.
 
 ### alpha = 3000
 ![GIF](https://github.com/Bahari95/several-problems-psydac-python-codes/blob/main/Generalized_alpha_method_for_Cahn_Hilliard_system/alpha_3000.gif)
