@@ -1,6 +1,6 @@
 # several-problems-psydac-python-codes
 
-on solving several problems using IGA, Initialization using psydac 
+On solving several problems with IGA, Initialization with psydac: there is a psydac script for the Cahn-Hilliard equation using iso-geometric analysis.
 
 ## Please install psydac and start enjoying your research with a simple implementation using psydac
 
