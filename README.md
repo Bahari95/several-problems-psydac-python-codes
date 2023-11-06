@@ -14,6 +14,8 @@ On solving several problems with IGA, Initialization with psydac: there is a psy
   https://github.com/pyccel/pyccel
 
 ## Example of adapted mesh.
+  https://www.sciencedirect.com/science/article/pii/S0045782523006941
+
 ![PNG](https://github.com/Bahari95/several-problems-psydac-python-codes/blob/main/Mixed_formulation_Monge_Ampere_equation/MAE_equation.png)
 
 ## As an exam, the Cahn-Haliard system evolved until t = 1000 steps.
