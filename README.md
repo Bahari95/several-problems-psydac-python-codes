@@ -5,10 +5,7 @@ On solving several problems with IGA, Initialization with psydac: there is a psy
 ## Please install psydac and start enjoying your research with a simple implementation using psydac
 
 **For your analysis You can find and install the following packages from the url**
- with imageio.get_writer('mygif.gif', mode='I') as writer: 
-     for filename in ['u_{}.png'.format(i) for i in range(1,ii_max)]: 
-         image = imageio.imread(filename) 
-         writer.append_data(image) 
+
 # For psydac : 
   https://github.com/pyccel/psydac
 
