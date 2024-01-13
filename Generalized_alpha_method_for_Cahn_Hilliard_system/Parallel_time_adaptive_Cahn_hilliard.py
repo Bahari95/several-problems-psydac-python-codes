@@ -153,7 +153,7 @@ equation = find(u, forall=v, lhs=a(u, v), rhs=-l(v) )
 
 
 # Create computational domain from topological domain
-domain_h = discretize(domain, ncells=[32,32])
+domain_h = discretize(domain, ncells=[16,16])
 
 # Discrete spaces
 Vh = discretize(V, domain_h, degree=[2,2], periodic = [True, True])
