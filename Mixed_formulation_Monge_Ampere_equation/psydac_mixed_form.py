@@ -76,18 +76,18 @@ def get_boundaries(*args):
     
 
 #------------------------------------------------------------------------------
-def run_non_linear_poisson(degree= [3, 3], ncells=[6, 6], comm=None, scipy=False):
+def run_non_linear_poisson(degree= [3, 3], ncells=[16, 16], comm=None, scipy=False):
 
     # Maximum number of Newton iterations and convergence tolerance
-    N      = 1
+    N      = 20
     TOL    = 1e-8
     nbasis = [ncells[0]+degree[0], ncells[1]+degree[1]]   
 
     # Define topological domain
-    Omega = Square() #Domain.from_file(filename)
+    Omega  = Square() #Domain.from_file(filename)
     
     B_neumann = Omega.boundary
-    nn = NormalVector('nn')
+    nn     = NormalVector('nn')
 
     # Method of manufactured solutions: define exact
     # solution phi_e, then compute right-hand side f
@@ -139,8 +139,8 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[6, 6], comm=None, scipy=False
     # Boundaries
     boundary_0h = Union(*[Omega.get_boundary(**kw) for kw in get_boundaries(1,2)])
     boundary_1h = Union(*[Omega.get_boundary(**kw) for kw in get_boundaries(3,4)])
-    ue         = Tuple(0, 0)
-    bc          = [EssentialBC(du, ue,B_neumann)] #, EssentialBC(du, 0., boundary_1h)]
+    # ue         = Tuple(0, 0)
+    bc          = [EssentialBC(du[0], 0.,boundary_0h), EssentialBC(du[1], 0., boundary_1h)]
     
     equation = find((du, dp), forall=(v, q), lhs=a((du, dp), (v, q)), rhs=l(v, q), bc = bc)
 
@@ -179,7 +179,7 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[6, 6], comm=None, scipy=False
     u0h[0].coeffs[nbasis[0]-1,0:nbasis[1]-1] = 1.
     u0h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1] = 1.
 
-    print(u0h[0].coeffs[0,0], u0h[0].coeffs[:,:], u0h[1].coeffs[0,nbasis[1]-1])  
+    #print(u0h[0].coeffs[0,0], u0h[0].coeffs[:,:], u0h[1].coeffs[0,nbasis[1]-1])  
     
     solver = scipy_solver if scipy else psydac_solver
     #... Picard iteration
@@ -187,12 +187,12 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[6, 6], comm=None, scipy=False
 
         M = a_h.assemble()
         b = l_h.assemble(u=u_h, u0 = u0h)
-        print(M.toarray())
+        #print(M.toarray())
 
         apply_essential_bc(M, *equation_h.bc, identity=True)
         apply_essential_bc(b, *equation_h.bc)
-        print(M.toarray()[nbasis[0]:2*nbasis[0],0:nbasis[1]-1])
-        print(b.toarray()[:])
+        #print(M.toarray()[nbasis[0]:2*nbasis[0],0:nbasis[1]-1])
+        #print(b.toarray()[:])
         
         x,info = solver(M, b)
 
@@ -200,7 +200,7 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[6, 6], comm=None, scipy=False
         u_h[1].coeffs[:]             = x[1][:]
         p_h.coeffs[:]                = x[2][:]
 
-        print(u_h[0].coeffs[:])
+        #print(u_h[0].coeffs[:])
         # ...
         u_h[0].coeffs[0,0:nbasis[1]-1]           = 0. 
         u_h[0].coeffs[nbasis[0]-1,0:nbasis[1]-1] = 1. 
