@@ -178,9 +178,6 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=Fal
     # ... in Hdiv space [degree-1, degree] x [degree, degree-1]
     u0h[0].coeffs[nbasis[0]-1,0:nbasis[1]-1] = 1.
     u0h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1] = 1.
-    #print(u0h[0].coeffs[0:nbasis[0],0:nbasis[1]-1], '\n')
-    #print(u0h[1].coeffs[0:nbasis[0]-1,0:nbasis[1]], '\n')
-    #print(u0h[0].coeffs[0,0], u0h[0].coeffs[:,:], u0h[1].coeffs[0,nbasis[1]-1])  
     
     solver = scipy_solver if scipy else psydac_solver
     #... Picard iteration
@@ -193,8 +190,6 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=Fal
 
         apply_essential_bc(M, *equation_h.bc, identity=True)
         apply_essential_bc(b, *equation_h.bc)
-        #print(M.toarray()[nbasis[0]:2*nbasis[0],0:nbasis[1]-1])
-        #print(b.toarray()[:])
         
         x,info = solver(M, b, x0 = x0)
 
@@ -210,20 +205,6 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=Fal
 
         u_h[1].coeffs[0:nbasis[0]-1,0]             = 0.
         u_h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1]   = 1.
-
-        #print(u_h[0].coeffs[0:nbasis[0],0:nbasis[1]-1], '\n')
-        #print(u_h[1].coeffs[0:nbasis[0]-1,0:nbasis[1]], '\n')
-        # ...
-        '''
-        x = equation_h.solve( u = u_h, u0 = u0h)
-        u_h[0].coeffs[:] = x[0].coeffs[:]
-        u_h[1].coeffs[:] = x[1].coeffs[:]
-        # ... update the mapping's boudnary
-        u_h[0].coeffs[nbasis[0]-1,:] = 1. 
-        u_h[1].coeffs[:,nbasis[1]-1] = 1.
-
-        p_h.coeffs[:]    = x[2].coeffs[:]
-        '''
         # ...
         
         dp_h.coeffs[:]  -= p_h.coeffs[:]
@@ -293,8 +274,7 @@ def test_nonlinear_MFMAE_square():
 
     res_l2, u_h = run_non_linear_poisson()
     Vh = u_h.space
-    #print(Vh.spaces[0])
-    #print(Vh.spaces[0].breaks)
+
     #+++++++++++++++++++++++++++
     ## Affichage des solutions
     #+++++++++++++++++++++++++++    
