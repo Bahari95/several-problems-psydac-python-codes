@@ -55,8 +55,8 @@ def scipy_solver(M, b):
     return x,0
 
 #------------------------------------------------------------------------------
-def psydac_solver(M, b):
-    return lsmr(M, M.T, b, maxiter=10000, tol=1e-6)
+def psydac_solver(M, b, x0 = None):
+    return lsmr(M, M.T, b, maxiter=10000, x0=x0, tol=1e-10)
     
 #==============================================================================
 def get_boundaries(*args):
@@ -79,7 +79,7 @@ def get_boundaries(*args):
 def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=False):
 
     # Maximum number of Newton iterations and convergence tolerance
-    N      = 1
+    N      = 5
     TOL    = 1e-8
     nbasis = [ncells[0]+degree[0], ncells[1]+degree[1]]   
 
@@ -184,6 +184,7 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=Fal
     
     solver = scipy_solver if scipy else psydac_solver
     #... Picard iteration
+    x0 = None
     for n in range(N):
 
         M = a_h.assemble()
@@ -195,11 +196,12 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=Fal
         #print(M.toarray()[nbasis[0]:2*nbasis[0],0:nbasis[1]-1])
         #print(b.toarray()[:])
         
-        x,info = solver(M, b)
+        x,info = solver(M, b, x0 = x0)
 
         u_h[0].coeffs[:]             = x[0][:]
         u_h[1].coeffs[:]             = x[1][:]
         p_h.coeffs[:]                = x[2][:]
+        x0 = x
 
 
         # ...
@@ -209,8 +211,8 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=Fal
         u_h[1].coeffs[0:nbasis[0]-1,0]             = 0.
         u_h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1]   = 1.
 
-        print(u_h[0].coeffs[0:nbasis[0],0:nbasis[1]-1], '\n')
-        print(u_h[1].coeffs[0:nbasis[0]-1,0:nbasis[1]], '\n')
+        #print(u_h[0].coeffs[0:nbasis[0],0:nbasis[1]-1], '\n')
+        #print(u_h[1].coeffs[0:nbasis[0]-1,0:nbasis[1]], '\n')
         # ...
         '''
         x = equation_h.solve( u = u_h, u0 = u0h)
