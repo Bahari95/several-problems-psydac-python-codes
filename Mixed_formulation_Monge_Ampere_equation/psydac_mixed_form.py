@@ -76,10 +76,10 @@ def get_boundaries(*args):
     
 
 #------------------------------------------------------------------------------
-def run_non_linear_poisson(degree= [3, 3], ncells=[16, 16], comm=None, scipy=False):
+def run_non_linear_poisson(degree= [3, 3], ncells=[14, 14], comm=None, scipy=False):
 
     # Maximum number of Newton iterations and convergence tolerance
-    N      = 20
+    N      = 1
     TOL    = 1e-8
     nbasis = [ncells[0]+degree[0], ncells[1]+degree[1]]   
 
@@ -131,10 +131,10 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[16, 16], comm=None, scipy=Fal
 
     f  = sqrt( dx1(u[0])**2+dx2(u[1])**2+2.*dx1(u[1])**2 + 2.*g )
     #.. Assembles nonlinear Poisson
-    l  = LinearForm( (v, q), integral(Omega, f*q - div(u0)*q - dot(u0,v) ))
+    l  = LinearForm( (v, q), integral(Omega,  - dot(u0,v) + f*q - div(u0)*q ))
 
     #... Linear model (for Picard iteration)
-    a = BilinearForm( ((du,dp),(v, q)), integral(Omega, dot(du, v) + div(du) * q + dp * div(v) ) )
+    a = BilinearForm( ((du,dp),(v, q)), integral(Omega, dot(du, v) + dp * div(v) + div(du) * q ) ) #+ 1e-8*dp*q
 
     # Boundaries
     boundary_0h = Union(*[Omega.get_boundary(**kw) for kw in get_boundaries(1,2)])
@@ -175,10 +175,11 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[16, 16], comm=None, scipy=Fal
     dp_h = FemField(V2h)
     
     import numpy as np
-
+    # ... in Hdiv space [degree-1, degree] x [degree, degree-1]
     u0h[0].coeffs[nbasis[0]-1,0:nbasis[1]-1] = 1.
     u0h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1] = 1.
-
+    #print(u0h[0].coeffs[0:nbasis[0],0:nbasis[1]-1], '\n')
+    #print(u0h[1].coeffs[0:nbasis[0]-1,0:nbasis[1]], '\n')
     #print(u0h[0].coeffs[0,0], u0h[0].coeffs[:,:], u0h[1].coeffs[0,nbasis[1]-1])  
     
     solver = scipy_solver if scipy else psydac_solver
@@ -200,13 +201,16 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[16, 16], comm=None, scipy=Fal
         u_h[1].coeffs[:]             = x[1][:]
         p_h.coeffs[:]                = x[2][:]
 
-        #print(u_h[0].coeffs[:])
-        # ...
-        u_h[0].coeffs[0,0:nbasis[1]-1]           = 0. 
-        u_h[0].coeffs[nbasis[0]-1,0:nbasis[1]-1] = 1. 
 
-        u_h[1].coeffs[0:nbasis[0]-1,0]           = 0.
-        u_h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1] = 1.
+        # ...
+        u_h[0].coeffs[0,0:nbasis[1]-1]             = 0. 
+        u_h[0].coeffs[nbasis[0]-1,0:nbasis[1]-1]   = 1. 
+
+        u_h[1].coeffs[0:nbasis[0]-1,0]             = 0.
+        u_h[1].coeffs[0:nbasis[0]-1,nbasis[1]-1]   = 1.
+
+        print(u_h[0].coeffs[0:nbasis[0],0:nbasis[1]-1], '\n')
+        print(u_h[1].coeffs[0:nbasis[0]-1,0:nbasis[1]], '\n')
         # ...
         '''
         x = equation_h.solve( u = u_h, u0 = u0h)
@@ -246,81 +250,53 @@ def run_non_linear_poisson(degree= [3, 3], ncells=[16, 16], comm=None, scipy=Fal
 ###############################################################################
 #            SERIAL TESTS
 ###############################################################################
+from matplotlib import pyplot as plt
+#from simplines import plot_field_2d
+from psydac.utilities.utils import refine_array_1d 
+import numpy as np
 
+def plot_field(field, N=40, i_sav = 0):
+
+    field0 = field[0]
+    field1 = field[1]
+    # ...
+    Vh = field0.space
+    eta1 = refine_array_1d( Vh.spaces[0].breaks, N )
+    eta2 = refine_array_1d( Vh.spaces[1].breaks, N )
+    sX = np.array( [[ field0( e1,e2 ) for e2 in eta2] for e1 in eta1] )
+    # ...
+    Vh   = field1.space
+    sY = np.array( [[ field1( e1,e2 ) for e2 in eta2] for e1 in eta1] )
+    
+    fig =plt.figure() 
+    nbptsx, nbptsy= sX.shape
+    for i in range(nbptsx):
+       phidx = sX[:,i]
+       phidy = sY[:,i]
+
+       plt.plot(phidx, phidy, '-k', linewidth = 0.25)
+    for i in range(nbptsy):
+       phidx = sX[i,:]
+       phidy = sY[i,:]
+
+       plt.plot(phidx, phidy, '-k', linewidth = 0.25)
+    #axes[0].axis('off')
+    plt.margins(0,0)
+    fig.tight_layout()
+    plt.savefig('meshes_{}.png'.format(i_sav))
+    plt.show(block=False)
+    plt.close()
 #==============================================================================
 def test_nonlinear_MFMAE_square():
 
     res_l2, u_h = run_non_linear_poisson()
-
-
-    #.... Ploting
-    import matplotlib.pyplot            as     plt
-    from   matplotlib                   import ticker,cm
-    from   mpl_toolkits.mplot3d         import axes3d
-    from   mpl_toolkits.axes_grid1      import make_axes_locatable
-    import numpy                        as np
-    
-    # ...
-    nbpts = 80
-    I=J=np.linspace(0,1,nbpts)
-    X,Y=np.meshgrid(I,J)
-    sX =np.zeros((len(I),len(J)),float)
-    sY =np.zeros((len(I),len(J)),float)
-    density=np.zeros((len(I),len(J)),float)
-    for i in range(nbpts):
-        for j in range(nbpts):
-             density[i,j]= 1./(2.+cos(8.*pi*sqrt((I[i]-0.5)**2+(J[j]-0.5)**2)))
-             sX[i,j] = u_h[0](I[i],J[j]) 
-             sY[i,j] = u_h[1](I[i],J[j])
-
+    Vh = u_h.space
+    #print(Vh.spaces[0])
+    #print(Vh.spaces[0].breaks)
     #+++++++++++++++++++++++++++
     ## Affichage des solutions
-    #+++++++++++++++++++++++++++
-    figtitle  = 'MAE_equation'
-    fig, axes = plt.subplots( 1, 2, figsize=[12,5], num=figtitle )
-    for ax in axes:
-        ax.set_aspect('equal')
-    
-    axes[0].set_title( 'Adapted mesh ' )
-    for i in range(nbpts):
-        phidx = sX[:,i]
-        phidy = sY[:,i]
-
-        axes[0].plot(phidx, phidy, '-b', linewidth = 0.54)
-    for i in range(nbpts):
-        phidx = sX[i,:]
-        phidy = sY[i,:]
-
-        axes[0].plot(phidx, phidy, '-b', linewidth = 0.54)
-    i     = 0
-    phidx = sX[:,i]
-    phidy = sY[:,i]
-    axes[0].plot(phidx, phidy, '-r', linewidth = 2.)
-    i     = nbpts-1
-    phidx = sX[:,i]
-    phidy = sY[:,i]
-    axes[0].plot(phidx, phidy, '-r', linewidth = 2.)
-    #''    
-    i     = 0
-    phidx = sX[i,:]
-    phidy = sY[i,:]
-    axes[0].plot(phidx, phidy, '-r', linewidth = 2.)
-    i     = nbpts-1
-    phidx = sX[i,:]
-    phidy = sY[i,:]
-    axes[0].plot(phidx, phidy, '-r', linewidth = 2.)
-    #axes[0].margins(0,0)
-    #axes[0].axis('off')
-        
-    axes[1].set_title( 'Density function')
-    im = axes[1].contourf(X, Y, density.T, cmap= 'jet')
-    divider = make_axes_locatable(axes[1]) 
-    cax   = divider.append_axes("right", size="5%", pad=0.05, aspect = 40) 
-    plt.colorbar(im, cax=cax)
-    fig.tight_layout()
-    plt.subplots_adjust(wspace=0.3)
-    plt.savefig('meshes_examples.png')
-    plt.show()
+    #+++++++++++++++++++++++++++    
+    plot_field(u_h, N= 3)
     
     expected_l2_residual =  1e-6
     assert( abs(res_l2 - expected_l2_residual) < 1.e-6)
