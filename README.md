@@ -18,7 +18,7 @@ On solving several problems with IGA, Initialization with psydac: there is a psy
 
 ![PNG](https://github.com/Bahari95/several-problems-psydac-python-codes/blob/main/Mixed_formulation_Monge_Ampere_equation/MAE_equation.png)
 
-## As an exam, the Cahn-Haliard system evolved until t = 1000 steps.
+## As an example, the Cahn-Haliard system evolved after 1000 steps.
   https://doi.org/10.1016/j.cma.2008.05.003
 ### alpha = 3000
 ![GIF](https://github.com/Bahari95/several-problems-psydac-python-codes/blob/main/Generalized_alpha_method_for_Cahn_Hilliard_system/alpha_3000.gif)
